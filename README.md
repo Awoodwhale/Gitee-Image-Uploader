@@ -8,6 +8,11 @@
 
 ![gitee](imgs/gitee.png)
 
+```bash
+go build -o gitee_image_upload.exe main.go # Windows
+go build -o gitee_image_upload main.go #Linux / Mac
+```
+
 参数列表：
 - token（必填） gitee操作的凭证
 - owner（必填） gitee用户名
