@@ -4,10 +4,15 @@
 
 ## 使用方式
 
-在使用本项目之前，需要前往gitee开通[api接口权限](https://gitee.com/api/v5/swagger#/postV5ReposOwnerRepoContentsPath)，授权完成后，token会自动填写在接口测试处，复制记录带入本项目`-token`参数即可。或者前往个人设置，生成个人令牌，获取token
+在使用本项目之前，需要前往gitee开通[api接口权限](https://gitee.com/api/v5/swagger#/postV5ReposOwnerRepoContentsPath)，授权完成后，token会自动填写在接口测试处，复制记录带入本项目`-token`参数即可。
 
 ![gitee](imgs/gitee.png)
 
+或者前往个人设置，生成个人令牌，获取token
+
+![gitee](imgs/gitee2.png)
+
+在获取token后，就可以使用golang编译二进制文件
 
 ```bash
 go build -o gitee_image_upload.exe main.go # Windows
@@ -21,7 +26,7 @@ go build -o gitee_image_upload main.go #Linux / Mac
 - path（必填） gitee上传文件的位置，例如 `imgs/`
 - branch（选填） gitee仓库的分支，不填就是默认分支
 - message（选填） gitee上传的message
-- image_path（必填） 本地图片路径，支持多个文件上传，但是本参数一定要填写在最后，且不能使用`-image_path`的方式
+- image_path（必填） 本地或http图片路径，支持多个文件上传，但是本参数一定要填写在最后，且不能使用`-image_path`的方式
 
 使用例子：
 
@@ -50,7 +55,7 @@ Usage: gitee_image_upload [-h] [-token string] [-owner string] [-repo string] [-
 本项目可以结合Typora使用，设置Typora自定义图片上传指令为
 
 ```bash
-"E:\myworks\vscode_workspace\go_workspace\gitee_image_upload\gitee_image_upload.exe"  -token 你的token -path 想要上传的路径 -branch master -owner 你的gitee用户名 -repo 你的gitee仓库 
+"C:\path\gitee_image_upload.exe"  -token 你的token -path 想要上传的路径 -branch master -owner 你的gitee用户名 -repo 你的gitee仓库 
 ```
 
 ![typora](imgs/typora.png)
