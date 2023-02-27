@@ -10,21 +10,24 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 )
 
+// gitee上传文件的api
 const API = "https://gitee.com/api/v5/repos/%s/%s/contents/%s"
 
 var (
-	token   string
-	owner   string
-	repo    string
-	message string
-	branch  string
-	path    string
-	paths   = []string{}
+	token   string       // gitee的token
+	owner   string       // gitee的owner
+	repo    string       // gitee的repo
+	message string       // 上传时commit的message
+	branch  string       // 上传到repo的分支
+	path    string       // 上传到repo的路径
+	paths   = []string{} // 本地图片路径或互联网图片路径
 )
 
+// bindFlags 绑定参数
 func bindFlags() {
 	flag.StringVar(&token, "token", "", "gitee token")
 	flag.StringVar(&owner, "owner", "", "gitee owner")
@@ -49,6 +52,7 @@ func bindFlags() {
 	}
 }
 
+// upload 上传图片到gitee的总执行流程
 func upload() {
 	if token == "" {
 		fmt.Println("[Error] Empty token")
@@ -63,44 +67,88 @@ func upload() {
 		return
 	}
 	fmt.Println("[Info] Start uploading")
+	postData := url.Values{} // postData
+	postData.Add("access_token", token)
+	postData.Add("message", message)
+	if branch != "" {
+		postData.Add("branch", branch)
+	}
 	for _, v := range paths {
-		if exist, _ := fileExists(v); !exist {
-			continue
-		}
-		content, err := os.ReadFile(v)
-		if err != nil {
-			fmt.Println("[Error] Read image file error, ", err.Error())
-			continue
-		}
-		tmpData := url.Values{}
-		if branch != "" {
-			tmpData.Add("branch", branch)
-		}
-		tmpData.Add("access_token", token)
-		tmpData.Add("message", message)
-		tmpPath := path + "image_" + strconv.FormatInt(time.Now().Unix(), 10) + "_" + filepath.Base(v)
-		postApi := fmt.Sprintf(API, owner, repo, tmpPath)
-		tmpData.Add("content", base64.StdEncoding.EncodeToString(content))
-		resp, err := http.PostForm(postApi, tmpData)
-		if err != nil {
-			fmt.Println("[Error] Upload image file error, ", err.Error())
-			continue
-		}
-		defer resp.Body.Close()
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			fmt.Println("[Error] Parse resp body error, ", err.Error())
-			continue
-		}
-		if resp.StatusCode == 201 {
-			fmt.Println("https://gitee.com/" + owner + "/" + repo + "/raw/master/" + tmpPath)
-		} else {
-			fmt.Println("[Error] Upload to gitee error, resp ↓\n" + string(body))
-			fmt.Println(string(body))
-		}
+		uploadImage(v, postData)
 	}
 }
 
+// uploadImage 上传图片到gitee
+func uploadImage(imagePath string, postData url.Values) {
+	var (
+		filename  string
+		imageData []byte
+		resp      *http.Response
+		err       error
+	)
+
+	if isHttpImage(imagePath) {
+		filename = filepath.Base(imagePath)
+		resp, err = http.Get(imagePath)
+		if err != nil {
+			fmt.Println("[Error] Download http image file error, ", err.Error())
+			return
+		}
+		defer resp.Body.Close()
+		imageData, err = io.ReadAll(resp.Body)
+		if err != nil {
+			fmt.Println("[Error] Read image file error, ", err.Error())
+			return
+		}
+	} else if exist, _ := fileExists(imagePath); exist {
+		filename = filepath.Base(imagePath)
+		imageData, err = os.ReadFile(imagePath)
+		if err != nil {
+			fmt.Println("[Error] Read image file error, ", err.Error())
+			return
+		}
+	} else {
+		fmt.Println("[Error] Image file path error")
+		return
+	}
+	uploadPath := path + "image_" + strconv.FormatInt(time.Now().Unix(), 10) + "_" + filename
+	postApi := fmt.Sprintf(API, owner, repo, uploadPath)
+	postData.Add("content", base64.StdEncoding.EncodeToString(imageData))
+	resp, err = http.PostForm(postApi, postData)
+	if err != nil {
+		fmt.Println("[Error] Upload image file error, ", err.Error())
+		return
+	}
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("[Error] Parse resp body error, ", err.Error())
+		return
+	}
+	if resp.StatusCode == 201 {
+		fmt.Println("https://gitee.com/" + owner + "/" + repo + "/raw/master/" + uploadPath)
+	} else {
+		fmt.Println("[Error] Upload to gitee error, resp ↓\n" + string(body))
+	}
+}
+
+// isHttpImage 检测是否是url图片资源
+func isHttpImage(path string) bool {
+	protols := [...]string{"https://", "http://"}
+	types := [...]string{"png", "jpg", "jpeg", "gif"}
+	for _, v := range protols {
+		if strings.HasPrefix(path, strings.ToLower(v)) {
+			for _, v := range types {
+				if strings.HasSuffix(path, strings.ToLower(v)) {
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+
+// fileExists 检测文件是否存在
 func fileExists(path string) (bool, error) {
 	_, err := os.Stat(path)
 	if err == nil {
@@ -112,6 +160,7 @@ func fileExists(path string) (bool, error) {
 	return false, err
 }
 
+// main 主程序
 func main() {
 	bindFlags()
 	upload()
