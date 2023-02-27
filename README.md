@@ -4,11 +4,10 @@
 
 ## 使用方式
 
-在使用本项目之前，需要前往gitee开通[api接口权限](https://gitee.com/api/v5/swagger#/postV5ReposOwnerRepoContentsPath)，授权完成后，token会自动填写在接口测试处，复制记录带入本项目`-token`参数即可
+在使用本项目之前，需要前往gitee开通[api接口权限](https://gitee.com/api/v5/swagger#/postV5ReposOwnerRepoContentsPath)，授权完成后，token会自动填写在接口测试处，复制记录带入本项目`-token`参数即可。或者前往个人设置，生成个人令牌，获取token
 
 ![gitee](imgs/gitee.png)
 
-或者前往个人设置，生成个人令牌，获取token
 
 ```bash
 go build -o gitee_image_upload.exe main.go # Windows
