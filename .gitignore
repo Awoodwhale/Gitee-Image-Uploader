@@ -16,3 +16,6 @@
 
 # python scripts
 *.py
+
+# build bin
+/client
