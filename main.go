@@ -135,7 +135,7 @@ func uploadImage(imagePath string, postData url.Values) {
 // isHttpImage 检测是否是url图片资源
 func isHttpImage(path string) bool {
 	protols := [...]string{"https://", "http://"}
-	types := [...]string{"png", "jpg", "jpeg", "gif"}
+	types := [...]string{".png", ".jpg", ".jpeg", ".gif", ".bmp"}
 	for _, v := range protols {
 		if strings.HasPrefix(path, strings.ToLower(v)) {
 			for _, v := range types {
